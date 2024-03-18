@@ -10,16 +10,18 @@ export async function fetchData() {
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiCvFI_dzAV6jTiAnRq6ikqaeteoXMtZXjpHyk3MfVSYUt3jocJA38mxfdsSYatw/pub?gid=647677433&single=true&output=tsv";
     const icsp = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTiCvFI_dzAV6jTiAnRq6ikqaeteoXMtZXjpHyk3MfVSYUt3jocJA38mxfdsSYatw/pub?gid=962052684&single=true&output=tsv";
     const commune = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTiCvFI_dzAV6jTiAnRq6ikqaeteoXMtZXjpHyk3MfVSYUt3jocJA38mxfdsSYatw/pub?gid=961481301&single=true&output=tsv'
-
-    const [mandatData, dataArr, icspData, communeData] = await Promise.all([
+    const region = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTiCvFI_dzAV6jTiAnRq6ikqaeteoXMtZXjpHyk3MfVSYUt3jocJA38mxfdsSYatw/pub?gid=583846364&single=true&output=tsv'
+    
+    const [mandatData, dataArr, icspData, communeData,regionData] = await Promise.all([
 
         fetchDataFromSheet(mandat),
         fetchDataFromSheet(feicom),
         fetchDataFromSheet(icsp),
-        fetchDataFromSheet(commune)
+        fetchDataFromSheet(commune),
+        fetchDataFromSheet(region),
 
     ]);
-    return { mandatData, dataArr, icspData, communeData };
+    return { mandatData, dataArr, icspData, communeData ,regionData};
 }
 
 // @ts-ignore

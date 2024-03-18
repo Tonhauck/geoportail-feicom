@@ -14,24 +14,26 @@ export function uniqueValues(tableau, attribut, option = false, id) {
         const id_COMMUNE = objet['id_COMMUNE'];
         const id_REGION = objet['id_REGION'];
         const id_DEPARTEMENT = objet['id_DEPARTEMENT'];
+        const id_SECTEUR = objet['id_SECTEUR'];
+        const id_CONSEIL_REGIONAL = objet['id_CONSEIL_REGIONAL'];
 
-        if (valeur !== null && !seenValues[valeur]) {
+        if (valeur !== null && !seenValues[valeur.toLowerCase()]) {
             const item = { 'key': valeur, checked: false, 'id': valeurID };
 
             if (option && id_COMMUNE) {
                 item['id_COMMUNE'] = id_COMMUNE;
                 item['id_REGION'] = id_REGION;
                 item['id_DEPARTEMENT'] = id_DEPARTEMENT;
+                item['id_SECTEUR']=id_SECTEUR;
+                item['id_CONSEIL_REGIONAL']=id_CONSEIL_REGIONAL;
             }
-
             result.push(item);
-            seenValues[valeur] = true;
+            seenValues[valeur.toLowerCase()] = true;
         }
     }
 
     // Triez les clés par ordre ascendant
     result.sort((a, b) => a.key.localeCompare(b.key));
-
     return result;
 }
 
@@ -79,31 +81,67 @@ export function getSumOf(data, key) {
     return result;
 }
 
-export function getSumPerYear(data, startYear, endYear, scale) {
-    const statistics = {};
+export function getSumSuperficy(data,scale){ // for now "Information generale" doesn't care about filter and date so we don't need to handle it here
+    if (!data || data.length === 0) {
+        return []; 
+    }
 
+    const superficyByRegion={};
+    for(const entry of data){
+        const region =entry[scale];
+        const superficy=typeof entry.SUPERFICIE==='number'? entry.SUPERFICIE : parseInt(entry.SUPERFICIE.replace(/\s/g, ''));
+        if(!superficyByRegion[region]) {
+            superficyByRegion[region] = superficy;
+        }else{
+            superficyByRegion[region] += superficy;
+        }
+    }
+
+    
+
+    const result = Object.entries(superficyByRegion).map(([key, value]) => ({
+        [scale]: key,
+        'value': value
+    }));
+
+    return result;
+
+}
+
+export function getSumPerYear(data, startYear, endYear,valeurAccordMode, scale) {
+    const statistics = {};
     data.forEach(item => {
         const region = item[scale];
         const itemYear = parseInt(item['Année financement']);
 
         // Vérifier si l'année se trouve dans la plage spécifiée
         if (!isNaN(itemYear) && itemYear >= startYear && itemYear <= endYear) {
-            if (statistics[region]) {
-                statistics[region]++;
-            } else {
-                statistics[region] = 1;
+            if(valeurAccordMode==='amount'){
+                let str = item['Montant du financement']!==null?item['Montant du financement']:"0";
+                let amount= parseInt(str.replace(/\s/g, ''), 10);  
+                if (statistics[region]) {
+                    statistics[region]=statistics[region]+amount;
+                } else {
+                    statistics[region] = amount;
+                }   
+            }else{
+                if (statistics[region]) {
+                    statistics[region]++;
+                } else {
+                    statistics[region] = 1;
+                }
             }
         }
     });
-
     // Convertir l'objet de statistiques en un tableau d'objets avec la structure spécifiée
     const result = Object.entries(statistics).map(([region, count]) => ({
         [scale]: region,
         'value': count
     }));
-
-    return result;
+    return result;   
 }
+
+
 
 export function calculateTotalByRegion(data, startYear, endYear, scale, filters) {
     if (!data || data.length === 0) {
@@ -272,7 +310,6 @@ export function zoomToFeatureByValue(map, sourceName, columnName, selectedValue,
             filter: ['==', columnName, selectedValue] // Remplacer ces valeurs par les vôtres
         });
 
-        console.log(features)
         if (features.length > 0) {
             // Récupérer la géométrie (polygone) de l'entité
             const geometry = features[0].geometry;
@@ -359,13 +396,16 @@ export function sortByDescendingOrder(arr, property) {
     return arr.sort((a, b) => b[property] - a[property]);
 }
 
+export function sortByAscendingOrder(arr, property) {
+    return arr.sort((a, b) => a[property] - b[property]);
+}
 
 export function formattedValue(value) {
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
 export function rechercheMulticriteres(dataForMap, critères) {
-    if (critères.length === 0) {
+    if ( critères.length === 0) {
         // Si le tableau de critères est vide, retournez simplement l'array original
         return dataForMap;
     }
